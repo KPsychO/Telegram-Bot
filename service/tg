@@ -1,0 +1,4 @@
+#!/bin/bash
+mkdir -p ~/tg
+if [ -e $HOME/telegram-bot/socket.sock ]; then rm $HOME/telegram-bot/socket.sock; fi;
+$HOME/telegram-bot/tg/bin/telegram-cli -k $HOME/telegram-bot/tg/tg-server.pub -l 1 -E -S $HOME/telegram-bot/socket.sock -N -W $@

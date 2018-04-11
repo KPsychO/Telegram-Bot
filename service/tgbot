@@ -1,0 +1,65 @@
+#!/bin/bash
+
+pushd ~/telegram-bot > /dev/null
+
+daemonize=false
+keepAttached=false
+showHelp=false
+killSession=false
+noReturnUntilDone=false
+
+echo "$@"
+
+for arg in "$@"
+do
+  shift;
+  if [ "$arg" == "--" ]; then break; fi;
+  if [ "$arg" == "-h" ] || [ "$arg" == "--help" ]; then showHelp=true; fi;
+  if [ "$arg" == "-k" ] || [ "$arg" == "--kill" ]; then killSession=true; fi;
+  if [ "$arg" == "-d" ] || [ "$arg" == "--daemon" ]; then daemonize=true; fi;
+  if [ "$arg" == "-a" ] || [ "$arg" == "--attached" ]; then keepAttached=true; fi;
+  if [ "$arg" == "-nr" ] || [ "$arg" == "--noret" ]; then noReturnUntilDone=true; fi;
+done
+
+if $showHelp; then
+  echo "Help"
+  exit
+fi;
+
+if $killSession; then
+  echo quit | socat unix-connect:$HOME/tg/socket.sock STDIO
+  sleep 3
+  exit
+fi
+
+
+tmux has-session -t tgbot &> /dev/null
+if [ $? == 0 ]; then
+  if $daemonize; then
+    echo 'Daemonize'
+  else
+    tmux attach -t tgbot
+  fi
+else
+  if $keepAttached; then
+    ~/telegram-bot/service/tg -s ~/telegram-bot/bot/bot.lua $@
+  else
+    echo "No session was found. Spawning new session..."
+    tmux new-session -d -s tgbot "~/telegram-bot/service/tg -s ~/telegram-bot/bot/bot.lua $@;"
+    echo "Session spawned. Run again to attach to the session."
+  fi
+fi
+
+if $noReturnUntilDone; then
+  echo "Keep on"
+  while true; do
+    tmux has-session -t tgbot &> /dev/null
+    if [ $? != 0 ]; then
+      break
+    fi
+    sleep 2
+  done
+fi
+
+popd > /dev/null
+
