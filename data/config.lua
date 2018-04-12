@@ -15,8 +15,7 @@ do local _ = {
     "qr",
     "roll",
     "yoda",
-    "villagegamebot",
-    "9gag"
+    "villagegamebot"
   },
   sudo_users = {
     289823508
